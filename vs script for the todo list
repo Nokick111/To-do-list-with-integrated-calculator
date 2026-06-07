@@ -1,0 +1,137 @@
+import customtkinter as ctk
+
+
+all_tasks = []
+
+
+def update_progress():
+    total = len(all_tasks)
+    
+    if total == 0:
+        progress_bar.set(0)
+        return
+        
+    completed = 0
+    for checkbox in all_tasks:
+        if checkbox._check_state is True:
+            completed += 1
+            checkbox.configure(text_color="gray")
+        else:
+            checkbox.configure(text_color="black")
+            
+    progress_bar.set(completed / total)
+
+
+def open_calculator():
+    calc_win = ctk.CTkToplevel(root)
+    calc_win.title("Calculator")
+    calc_win.geometry("300x400")
+    calc_win.attributes("-topmost", True)  
+    
+    
+    calc_entry = ctk.CTkEntry(calc_win, width=260, font=ctk.CTkFont(size=20), justify="right")
+    calc_entry.pack(pady=20, padx=20)
+    
+    
+    def button_click(symbol):
+        if symbol == "C":
+            calc_entry.delete(0, ctk.END)
+        elif symbol == "=":
+            try:
+                result = eval(calc_entry.get())
+                calc_entry.delete(0, ctk.END)
+                calc_entry.insert(0, str(result))
+            except:
+                calc_entry.delete(0, ctk.END)
+                calc_entry.insert(0, "Error")
+        else:
+            calc_entry.insert(ctk.END, symbol)
+            
+    
+    button_frame = ctk.CTkFrame(calc_win, fg_color="transparent")
+    button_frame.pack(pady=10)
+
+    buttons = [
+        ['7', '8', '9', '/'],
+        ['4', '5', '6', '*'],
+        ['1', '2', '3', '-'],
+        ['C', '0', '=', '+']
+    ]
+
+    for row_idx, row in enumerate(buttons):
+        for col_idx, symbol in enumerate(row):
+            btn = ctk.CTkButton(
+                button_frame, 
+                text=symbol, 
+                width=50, 
+                height=50,
+                command=lambda s=symbol: button_click(s)
+            )
+            btn.grid(row=row_idx, column=col_idx, padx=5, pady=5)
+
+
+def add_todo(event=None):
+    todo_text = entry.get()
+    if not todo_text:
+        return
+        
+    task_frame = ctk.CTkFrame(scrollable_frame, fg_color="transparent")
+    task_frame.pack(fill="x", pady=5)
+    
+    label = ctk.CTkCheckBox(
+        task_frame, 
+        text=todo_text, 
+        font=ctk.CTkFont(size=16), 
+        command=update_progress
+    )
+    label.pack(side="left", padx=10)
+    all_tasks.append(label)
+    
+    
+    def delete_this_task():
+        all_tasks.remove(label)
+        task_frame.destroy()
+        update_progress()
+        
+    delete_button = ctk.CTkButton(
+        task_frame, 
+        text="Delete", 
+        font=ctk.CTkFont(size=12), 
+        command=delete_this_task
+    )
+    delete_button.pack(side="right", padx=10)
+    
+    update_progress()
+    entry.delete(0, ctk.END)
+
+
+root = ctk.CTk()
+root.geometry("650x850")  
+root.title("To-Do List")
+
+title_label = ctk.CTkLabel(root, text="Daily To-Do-list", font=ctk.CTkFont(size=24, weight="bold"))
+title_label.pack(pady=20)
+
+scrollable_frame = ctk.CTkScrollableFrame(root, width=600, height=400)
+scrollable_frame.pack(pady=20)
+
+entry = ctk.CTkEntry(root, width=400, font=ctk.CTkFont(size=16))
+entry.pack(pady=10)
+entry.bind("<Return>", add_todo)
+
+
+add_button = ctk.CTkButton(root, text="Add Task", font=ctk.CTkFont(size=16, weight="bold"), command=add_todo)
+add_button.pack(pady=5)
+
+clear_button = ctk.CTkButton(root, text="Clear All", font=ctk.CTkFont(size=16, weight="bold"), command=lambda: [child.destroy() for child in scrollable_frame.winfo_children()])
+clear_button.pack(pady=5)
+
+calc_button = ctk.CTkButton(root, text="Open Calculator", font=ctk.CTkFont(size=16, weight="bold"), command=open_calculator)
+calc_button.pack(pady=5)
+
+progress_bar = ctk.CTkProgressBar(root, width=400)
+progress_bar.pack(pady=20)
+progress_bar.set(0)
+
+
+root.mainloop()
